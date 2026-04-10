@@ -1,0 +1,30 @@
+# Build artifacts
+dist/
+dist-newstyle/
+*.cabal~
+.cabal-sandbox/
+cabal.sandbox.config
+
+# Stack artifacts
+.stack-work/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Session data
+.agent-sessions/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak

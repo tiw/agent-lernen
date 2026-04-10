@@ -1,0 +1,73 @@
+name: agent-hs
+version: 0.1.0.0
+github: "agent-course/agent-hs"
+license: MIT
+author: "Agent Course"
+maintainer: "agent-course@example.com"
+copyright: "2024 Agent Course"
+
+extra-source-files:
+- README.md
+- QUICKSTART.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            AI
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/agent-course/agent-hs#readme>
+
+dependencies:
+- base >= 4.14 && < 5
+- aeson >= 2.0
+- text >= 2.0
+- mtl >= 2.2
+- transformers >= 0.5
+- async >= 2.2
+- uuid >= 1.3
+- unordered-containers >= 0.2
+- vector >= 0.12
+- http-conduit >= 2.3
+- directory >= 1.3
+- process >= 1.6
+- bytestring >= 0.10
+- exceptions >= 0.10
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+
+executables:
+  agent-example:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - agent-hs
+
+tests:
+  agent-hs-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - agent-hs
+    - HUnit >= 1.6
