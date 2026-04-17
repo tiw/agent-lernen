@@ -131,6 +131,10 @@ class TaskBoard:
                 return False
         return True
 
+    def get_task(self, task_id: int) -> Optional[Task]:
+        """获取指定任务（含结果）"""
+        return self._tasks.get(task_id)
+
     def get_status(self) -> list[dict]:
         """获取所有任务状态"""
         return [

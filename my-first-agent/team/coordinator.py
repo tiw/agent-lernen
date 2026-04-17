@@ -15,11 +15,11 @@ from typing import Optional
 # 支持直接运行和模块导入两种模式
 if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from team.roles import BaseAgent, AgentRole, RoleType, ALL_ROLES, SimulatedAgent
+    from team.roles import BaseAgent, AgentRole, RoleType, ALL_ROLES, SimulatedAgent, LLMAgent
     from team.message_bus import MessageBus, Message
     from team.task_board import TaskBoard, TaskStatus
 else:
-    from .roles import BaseAgent, AgentRole, RoleType, ALL_ROLES, SimulatedAgent
+    from .roles import BaseAgent, AgentRole, RoleType, ALL_ROLES, SimulatedAgent, LLMAgent
     from .message_bus import MessageBus, Message
     from .task_board import TaskBoard, TaskStatus
 
@@ -46,17 +46,27 @@ class Coordinator:
     4. 收集结果并整合
     """
 
-    def __init__(self, team_name: str = "default-team"):
+    def __init__(
+        self,
+        team_name: str = "default-team",
+        client=None,  # OpenAI client, type hint avoided to prevent import cycle
+        model: str = "qwen-plus",
+    ):
         self.team_name = team_name
         self.config = TeamConfig(name=team_name)
         self.agents: dict[str, BaseAgent] = {}
         self.message_bus = MessageBus()
         self.task_board = TaskBoard()
         self._running = False
+        self._client = client
+        self._model = model
 
     def add_role(self, role: AgentRole) -> BaseAgent:
         """添加角色到团队"""
-        agent = SimulatedAgent(role)
+        if self._client is not None:
+            agent = LLMAgent(role, self._client, self._model)
+        else:
+            agent = SimulatedAgent(role)
         self.agents[role.agent_id] = agent
         self.message_bus.register_agent(role.agent_id)
         self.config.members.append({
@@ -133,8 +143,42 @@ class Coordinator:
         ]
 
     def _parse_plan(self, plan_result: str) -> list[dict]:
-        """解析 Planner 的输出"""
-        return self._default_decomposition(plan_result)
+        """尝试解析 Planner 的结构化输出，失败则回退到默认分解"""
+        import json
+        import re
+
+        # 尝试从结果中提取 JSON 数组
+        json_match = re.search(r'\[[\s\S]*\]', plan_result)
+        if json_match:
+            try:
+                tasks = json.loads(json_match.group())
+                if isinstance(tasks, list) and all("description" in t for t in tasks):
+                    # 将任意 ID（如 "T1"）映射为从 1 开始的整数索引
+                    normalized = []
+                    for i, t in enumerate(tasks):
+                        deps = t.get("dependencies", [])
+                        # 将 string deps 转为整数索引引用
+                        int_deps = []
+                        for d in deps:
+                            if isinstance(d, int):
+                                int_deps.append(d)
+                            elif isinstance(d, str):
+                                # "T1" -> 1, "task_1" -> 1, 纯数字 -> int
+                                num = re.sub(r'[^\d]', '', str(d))
+                                if num:
+                                    int_deps.append(int(num))
+                        normalized.append({
+                            "id": i + 1,
+                            "description": t["description"],
+                            "priority": t.get("priority", 1),
+                            "dependencies": int_deps,
+                        })
+                    return normalized
+            except json.JSONDecodeError:
+                pass
+
+        # 回退到默认分解
+        return self._default_decomposition("planned task")
 
     async def _execute_tasks(self) -> dict[int, str]:
         """执行任务板上的所有任务"""
@@ -174,10 +218,14 @@ class Coordinator:
         return results
 
     def _gather_context(self, dependency_ids: list[int]) -> dict:
-        """收集依赖任务的输出"""
+        """从已完成的任务中获取真实上下文"""
         context = {}
         for dep_id in dependency_ids:
-            context[f"task_{dep_id}"] = f"Result from task {dep_id}"
+            task = self.task_board.get_task(dep_id)
+            if task and task.result:
+                context[f"task_{dep_id}"] = task.result
+            else:
+                context[f"task_{dep_id}"] = "(no result available)"
         return context
 
     async def _summarize_results(self, results: dict[int, str]) -> str:

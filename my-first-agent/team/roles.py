@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from openai import OpenAI
+
 logger = logging.getLogger(__name__)
 
 
@@ -387,6 +389,70 @@ See API documentation for details.
 ## Changelog
 - v1.0.0: Initial release
 """
+
+
+# ============================================================
+# LLM Agent（真实调用 LLM，而非硬编码模板）
+# ============================================================
+
+
+def _format_context(ctx: dict) -> str:
+    """将上下文 dict 格式化为可读字符串"""
+    if not ctx:
+        return "(无上下文)"
+    parts = []
+    for key, value in ctx.items():
+        parts.append(f"--- {key} ---")
+        parts.append(str(value))
+    return "\n".join(parts)
+
+
+class LLMAgent(BaseAgent):
+    """
+    基于 LLM 的真实 Agent。
+
+    使用 OpenAI 兼容 API 调用 LLM，基于角色 system prompt
+    和真实任务上下文生成内容（而非硬编码模板）。
+    """
+
+    def __init__(
+        self,
+        role: AgentRole,
+        client: OpenAI,
+        model: str = "qwen-plus",
+    ):
+        super().__init__(role)
+        self.client = client
+        self.model = model
+
+    async def execute(self, task_description: str, context: dict = None) -> str:
+        self.is_busy = True
+        self.current_task = task_description
+
+        logger.info(f"[{self.role.name}] Starting LLM: {task_description[:60]}...")
+
+        # 构建用户消息：任务 + 上下文
+        context_str = _format_context(context or {})
+        user_msg = f"Task: {task_description}\n\nContext:\n{context_str}"
+
+        # 调用 LLM（单轮，无工具）
+        response = await asyncio.to_thread(
+            self.client.chat.completions.create,
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self.role.system_prompt},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0.7,
+            max_tokens=4000,
+        )
+
+        result = response.choices[0].message.content or ""
+        self.is_busy = False
+        self.current_task = None
+
+        logger.info(f"[{self.role.name}] Completed")
+        return result
 
 
 # === 测试 ===

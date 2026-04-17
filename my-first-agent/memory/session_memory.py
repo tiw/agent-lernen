@@ -281,8 +281,8 @@ class ShortTermMemory:
         import sys
         if __name__ == "__main__":
             sys.path.insert(0, '..')
-        from tool_budget import ToolResultBudget
-        from micro_compact import MicroCompact
+        from .tool_budget import ToolResultBudget
+        from .micro_compact import MicroCompact
 
         self.session_id = session_id
         self.max_context_tokens = max_context_tokens
@@ -328,7 +328,7 @@ class ShortTermMemory:
         import sys
         if __name__ == "__main__":
             sys.path.insert(0, '..')
-        from token_counter import TokenEstimator
+        from .token_counter import TokenEstimator
 
         estimator = TokenEstimator()
         total_tokens = estimator.estimate_messages(self.messages)
@@ -367,6 +367,13 @@ class ShortTermMemory:
             'session_memory_injection': injection,
             'decisions': decisions,
         }
+
+    def reset(self) -> None:
+        """重置短期记忆"""
+        self.tool_budget.reset()
+        self.micro_compact.clear_cache_edits()
+        self.session_memory.reset()
+        self.messages = []
 
     def get_stats(self) -> dict:
         """获取完整统计"""
