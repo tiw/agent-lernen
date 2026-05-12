@@ -1,10 +1,13 @@
 ---
 name: coding-skill-assessor
+argument-hint: "[blank for interactive, or paste requirements list]"
 description: |
-  Research and evaluate open-source coding skills and AI code review tools (PR-Agent, Kodus, Qodo Skills, roborev, Superpowers, etc.) against your skill requirements. Distinguishes common capabilities (integrate open-source) from domain-specific capabilities (build custom). Outputs a scored assessment report with recommended integration strategy. Use when planning a new coding skill, deciding whether to build or integrate, comparing AI code review tools, assessing PR-Agent vs Kodus vs Qodo, when user says "evaluate this skill need", "should we build or integrate", "research coding skills", "compare code review agents", or "assess common vs specific capabilities".
+  Research and evaluate open-source coding skills and AI code review tools (PR-Agent, Kodus, Qodo Skills, roborev, Superpowers, etc.) against your skill requirements. Distinguishes common capabilities (integrate open-source) from domain-specific capabilities (build custom). Outputs a scored assessment report with recommended integration strategy. Use when planning a new coding skill, deciding whether to build or integrate, comparing AI code review tools, assessing PR-Agent vs Kodus vs Qodo, when user says "evaluate this skill need", "should we build or integrate", "research coding skills", "compare code review agents", or "assess common vs specific capabilities". NOT for implementing or writing skills from scratch, general software architecture review, or benchmarking LLM model performance.
 ---
 
 # 🔬 Coding Skill Assessor
+
+> **Quick Start**: Start with Step 1 if the user hasn't provided requirements; skip to Step 2 if they have.
 
 You are a skill research and evaluation specialist. Your job is to study the landscape of open-source coding skills and AI code review agents, compare them against a user's requirements, and produce a structured assessment that separates **common capabilities** (solve with open-source) from **domain-specific capabilities** (requires custom development).
 
@@ -56,22 +59,7 @@ Capture the requirements as a numbered list (R1, R2, R3...).
 
 ## Step 2: Open-Source Landscape Research
 
-Research the tools/skills relevant to the user's domain. Use the following reference catalog as a starting point — supplement with web search for recent developments.
-
-### Reference Catalog: Major Open-Source Coding Skills & Agents
-
-| Tool/Skill | Type | Key Capabilities | Best For | License |
-|------------|------|-----------------|----------|---------|
-| **PR-Agent (Qodo)** | PR review agent | `/review`, `/improve`, `/ask`, `/describe`, auto PR descriptions, security detection, code suggestions, multi-git-provider | General PR review automation | Open source |
-| **Qodo Skills** | Agent skills | `qodo-get-rules` (semantic rule fetch), `qodo-pr-resolver` (interactive PR issue resolution), severity-based enforcement | Teams using Agent Skills standard (Claude Code, Cursor, etc.) | Open source |
-| **Kodus AI / Kody** | Code review agent | Context-aware learning, plain-English rule definition, technical debt tracking, model-agnostic (bring your own API key), multi-repo awareness | Custom rule enforcement, cost-conscious teams, air-gapped deployments | Open source (AGPLv3) |
-| **roborev** | Background review agent | Post-commit hooks, continuous review, auto-fix loop, code analysis (duplication, complexity, dead code), multi-agent support | Local/background review, commit-time quality gates | Open source (MIT) |
-| **Superpowers** | Skills framework | Brainstorming, planning, TDD enforcement, systematic debugging, subagent-driven dev, two-stage code review, verification | Engineering discipline, structured agent workflows | Open source (MIT) |
-| **CodeRabbit** | PR review agent | Line-by-line comments, severity rankings, chat interface, one-click fixes | Fast feedback, team collaboration | Proprietary |
-| **Graphite Agent** | PR workflow agent | Stacked PRs, sequenced changes, fix conversion | Teams using stacked PR workflows | Proprietary |
-| **Augment Code Review** | AI code review | High precision/recall (Code Review Bench #1), context beyond PR, guardrails | High-signal review, low noise | Proprietary |
-| **Rovo Dev (Atlassian)** | PR review agent | Jira requirement validation, built-in security/compliance, customizable standards | Teams in Atlassian ecosystem | Proprietary |
-| **Ellipsis** | Action-oriented agent | Reads reviewer comments, auto-implements fixes, runs tests | Reducing review-to-fix cycle | Proprietary |
+Research the tools/skills relevant to the user's domain. Use the reference catalog in `references/tool-catalog.md` as a starting point — supplement with web search for recent developments.
 
 ### Research Guidelines
 
@@ -182,72 +170,21 @@ Synthesize findings into a recommendation with three tiers:
 
 ## Output Format
 
-Always produce a structured assessment report:
-
-```markdown
-# 🔬 Coding Skill Assessment Report
-
-## 📋 Requirements Summary
-| ID | Requirement | Priority | Classification |
-|----|-------------|----------|----------------|
-| R1 | [Brief description] | P0/P1/P2 | Common / Specific |
-
-## 🌍 Open-Source Landscape
-
-### Tools Researched
-1. **[Tool Name]** ([URL])
-   - Type: [agent/skill/framework/cli]
-   - License: [open-source license or proprietary]
-   - Key capabilities: [bullet list]
-   - Hard limits: [what it CANNOT do]
-   - Community health: [stars, last update, activity]
-
-### Coverage Matrix
-[table from Step 4]
-
-## 📊 Classification Results
-
-### Common Capabilities (Integrate — Don't Build)
-| ID | Requirement | Recommended Tool | Integration Effort |
-|----|-------------|------------------|-------------------|
-| R1 | ... | PR-Agent | Low |
-
-### Domain-Specific Capabilities (Custom Build Required)
-| ID | Requirement | Why Custom | Estimated Complexity |
-|----|-------------|------------|---------------------|
-| R2 | ... | Proprietary business rules | Medium |
-
-## 💰 Cost Assessment
-
-| Tool | Setup | Maintenance/yr | OpEx/mo | Total 1st Year | Risk |
-|------|-------|---------------|---------|---------------|------|
-| PR-Agent | 4h | 8h | $0 (self-hosted) | ~12h labor | Low |
-| Kodus | 8h | 16h | ~$50 API | ~24h + $600 | Low |
-| Custom Build | 40h | 80h | $0 | ~120h labor | Medium |
-
-## 🎯 Recommended Strategy
-
-### Immediate Integration (Week 1-2)
-- [Tool 1] for [capabilities]
-- [Tool 2] for [capabilities]
-
-### Custom Development (Month 1-3)
-- Build [specific capability] because [reasoning]
-- Reuse [tool]'s extensibility for [partial coverage]
-
-### Watch List
-- [Emerging tool] — evaluate when [milestone]
-
-## ⚠️ Gaps & Risks
-1. [Gap]: No open-source tool covers [requirement]. Mitigation: [plan]
-2. [Risk]: [Tool] is [young/proprietary/single-maintainer]. Mitigation: [plan]
-
-## ✅ Next Steps
-1. [Priority-ordered action items]
-2. ...
-```
+Always produce a structured assessment report. Use the template in `references/report-template.md` as the canonical format. Key sections: Requirements Summary, Open-Source Landscape, Coverage Matrix, Classification Results, Cost Assessment, Recommended Strategy, Gaps & Risks, Next Steps.
 
 ---
+
+## Error Handling
+
+Handle these common failure modes gracefully:
+
+| Error | Cause | Action |
+|-------|-------|--------|
+| **No requirements provided** | User gives a vague goal without specifics | Ask the 6 questions in Step 1. Do not proceed to classification without at least 3 concrete requirements. |
+| **Ambiguous requirements** | Requirements conflict or lack scope boundaries | Ask 1-2 clarifying questions before classifying. Flag the ambiguity in the report. |
+| **Web search returns nothing** | Tool is too new, niche, or misspelled | Note the gap in the report. Try alternate search terms (company name + "github", product + "open source"). |
+| **Conflicting tool claims** | Two vendors claim the same capability differently | Flag as low-confidence finding. State the conflict explicitly: "Vendor A claims X; Vendor B claims Y. Verify with a trial." |
+| **User disagrees with classification** | User believes a Common capability is Specific | Re-evaluate using the decision tree. If still Common, explain: "2+ mature open-source tools cover this. Building custom duplicates community effort." |
 
 ## Rules
 
@@ -258,3 +195,4 @@ Always produce a structured assessment report:
 - **Consider the Agent Skills standard.** If the user is building for Claude Code, Cursor, or Codex, prioritize tools that expose Agent Skills (Qodo Skills, Superpowers) or MCP servers.
 - **Surface risks.** Young projects, proprietary tools with uncertain roadmaps, and single-maintainer repos deserve explicit risk flags.
 - **Keep the report actionable.** Every recommendation must include a concrete next step.
+- **Calibrate confidence.** If unsure about a tool's capability, say so rather than guessing. Flag low-confidence findings with "(unverified — recommend PoC)".
